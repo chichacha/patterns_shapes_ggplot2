@@ -1,0 +1,71 @@
+---
+title: "Practice_Geomtric_Shapes"
+author: "Chisato"
+date: '2018-10-01'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## Install Required Libraries
+library(tidyverse)
+```
+
+## Harmonic Oscillations
+
+```{r harmonic}
+
+points <- 100
+
+df <- tibble(
+  t = seq(0,2*pi,length.out=points),
+  x = t,
+  y = sin(t)
+)
+
+df %>% ggplot(aes(x,y)) + geom_point() +
+  theme_minimal(base_family="Roboto Condensed")
+
+```
+
+## Lissajous Figures
+
+```{r pressure, echo=FALSE}
+
+lissajous <- function(freqx=4, freqy=1, shift=90, points=500,...){
+  df <- tibble(
+  t = seq(0,2*pi, length.out=points),
+  x = sin(t*freqx + shift),
+  y = sin(t*freqy)
+  ) 
+  
+  p <-df %>% ggplot(aes(x=x, y=y)) + 
+  geom_point(aes(color=t), shape=19, size=5, alpha=0.2) +
+  geom_path(size=0.2, alpha=0.5) +
+  theme_void() +
+  scale_color_viridis_c(guide="none", option="D") +
+  coord_fixed()
+  
+  print(p)
+}
+
+lissajous(freqx=3, freqy=2, shift=90)
+lissajous(freqx=2, freqy=1, shift=90)
+lissajous(1,2,120)
+lissajous(1,3,75)
+lissajous(1,3,195)
+lissajous(2,5,90,1000)
+lissajous(6,8,90,1000)
+lissajous(4,9,90,1000)
+lissajous(19,11,75,3000)
+lissajous(19,9,75,4000)
+lissajous(11,13,90,5000)
+lissajous(13,23,75,5000)
+
+
+```
+
+
+## Modulated Figures
+
