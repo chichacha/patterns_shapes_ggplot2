@@ -1,0 +1,98 @@
+---
+title: "Drawing Flowers Using Maths"
+author: "Chisato den Engelsen"
+date: '2018-10-01'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## Install Required Libraries
+library(tidyverse)
+
+```
+
+## Drawing with ggplot2! 
+
+
+```{r simplecircle}
+
+## generate regular sequence using seq function.
+
+df <- tibble(
+  t = seq(from=0, to=2*pi, length.out = 100) ,
+  x = sin(t),
+  y = cos(t),
+)
+
+# Make a scatter plot of points in a circle
+df %>% ggplot(aes(x=x, y=y)) + 
+  geom_point(size=20, shape=1) + 
+  coord_fixed() +
+  theme_void() 
+
+## Making something little silly...
+df %>% ggplot(aes(x=x*y, y=y)) + 
+  geom_point(size=20, shape=21, fill="#30303090") + 
+  geom_point(aes(x=x, y=x*y), size=10, shape=19, color="#40404030") +
+  coord_fixed() +
+  theme_void() 
+
+
+```
+
+## Using Golden Angle
+
+
+```{r goldenangle, echo=FALSE}
+
+# Defining the number of points
+points <- 500
+
+# Defining the Golden Angle
+angle = pi*(3-sqrt(5))
+
+df2 <- tibble(
+  t = (1:points) * angle, ## another way to create sequence!
+  x = sin(t),
+  y = cos(t)
+)
+
+## View what you've created
+head(df2)
+
+
+# Make a scatter plot of points in a spiral
+df2 %>% ggplot(aes(x=x*t, y=y*t, size=t)) +
+  geom_point(shape=21, color="#F36A7190", fill="#ffffff20") + 
+  coord_fixed() +
+  theme_void() +
+  theme(panel.background = element_rect(fill="black")) + ## change the background colour! 
+  scale_size_continuous(guide="none", range=c(1,20))
+
+
+```
+
+## Tweaking Angle
+
+```{r playingwithangle}
+
+df3 <- tibble(
+  angle = 5,
+  t = (1:300) * angle, ## another way to create sequence!
+  x = sin(t),
+  y = cos(t)
+)
+
+
+# Different Angle makes completely different shape!
+df3 %>% ggplot(aes(x=x*t, y=y*t, size=t)) +
+  geom_point(shape=17, color="#F36A7120", fill="#EB0A4490") + 
+  coord_fixed() +
+  theme_void() +
+  theme(panel.background = element_rect(fill="#26251C")) + ## change the background colour! 
+  scale_size_continuous(guide="none", range=c(1,20))
+
+```
+
