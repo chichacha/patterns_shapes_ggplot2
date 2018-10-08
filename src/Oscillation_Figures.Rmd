@@ -10,62 +10,284 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Install Required Libraries
 library(tidyverse)
+library(circular)  ## to convert rad to degree
+
 ```
 
 ## Harmonic Oscillations
 
 ```{r harmonic}
 
-points <- 100
+points <- 1000
 
 df <- tibble(
   t = seq(0,2*pi,length.out=points),
-  x = t,
-  y = sin(t)
+  x = t, ## angle
+  y = sin(t) # Sine curve gives you simple oscillation curve
 )
 
-df %>% ggplot(aes(x,y)) + geom_point() +
+df %>% ggplot() + 
+  geom_point(aes(x,y)) +
+  geom_point(aes(x,-y), color="grey") +
+  geom_point(aes(x,2*y), color="#208CB3") +  
+  geom_point(aes(x,3*y), color="#063858") +
+  geom_point(aes(x,-2*y), color="#F88208") +  
+  geom_point(aes(x,-3*y), color="#F39E1A") +
   theme_minimal(base_family="Roboto Condensed")
+
+
+## Sine Curve with Different Frequency
+df %>% ggplot() + 
+  geom_point(aes(x,sin(t))) +
+  geom_point(aes(x,sin(2*t)), color="#4ECCA3") +  ## Frequency of 2
+  geom_point(aes(x,sin(3*t)), color="#F95860") +  ## Frequency of 3
+  theme_minimal(base_family="Roboto Condensed")
+
+## Cosine Curve
+df %>% ggplot() + 
+  geom_point(aes(x,cos(t))) +
+  geom_point(aes(x,cos(2*t)), color="#4ECCA3") +  ## Frequency of 2
+  geom_point(aes(x,cos(3*t)), color="#F95860") +  ## Frequency of 3
+  theme_minimal(base_family="Roboto Condensed")
+
+## Shifting Curves
+df %>% ggplot() + 
+  geom_point(aes(x, sin(t)), color="black") +
+  geom_point(aes(x, sin(t + pi)), color="grey") +
+  geom_point(aes(x, sin(t + pi/2)), color="tomato") + # same as Cosine
+  geom_point(aes(x, sin(t + pi/4)), color="aquamarine") +
+  geom_point(aes(x, sin(t + pi/3)), color="blue") +
+  theme_minimal(base_family="Roboto Condensed")
+
+
+## Shifting & Changing Freq
+df %>% ggplot() + 
+  geom_line(aes(x, sin(t*2)), color="black") +
+  geom_line(aes(x, sin(t*2 + pi)), color="grey") +
+  geom_line(aes(x, sin(t*2 + pi/2)), color="tomato") + 
+  geom_line(aes(x, sin(t*3)), color="aquamarine") +
+  geom_line(aes(x, sin(t*3 + pi/2)), color="blue") +
+  theme_minimal(base_family="Roboto Condensed") 
+
+## Playing Around with Ribbon
+df %>% ggplot() +
+  geom_ribbon(aes(x=x, ymin=sin(t*3), ymax=cos(t*3)), alpha=0.3, fill="black") +
+  theme_minimal(base_family="Roboto Condensed")
+
+df %>% ggplot() +
+  geom_ribbon(aes(x=x, ymin=sin(t*3), ymax=sin(-t*3)), alpha=0.3, fill="black") +
+  theme_minimal(base_family="Roboto Condensed")
+
+df %>% ggplot() +
+  geom_ribbon(aes(x=x, ymin=sin(t*3), ymax=sin(t*40 + rad(40))), alpha=0.3, fill="black") +
+  theme_void()
+
+df %>% ggplot() +
+  geom_ribbon(aes(x=x, ymin=sin(t), ymax=sin(t*40 + rad(40)))) +
+  theme_void()
+
+df %>% ggplot(aes(x=x, y=sin(t*60 + rad(90)))) +
+  geom_point(aes (color=x), alpha=0.3, size=5, shape=11) +
+  geom_point(aes (color=x), alpha=0.3, size=5, shape=18) +
+  theme_void() +
+  coord_polar(theta="y") +
+  scale_color_viridis_c(option="C", guide="none")
+
 
 ```
 
 ## Lissajous Figures
 
-```{r pressure, echo=FALSE}
+This YouTube video is helpful to understand that Lissajous curves do!
+# https://www.youtube.com/watch?v=aUi8SnGGfG8
 
-lissajous <- function(freqx=4, freqy=1, shift=90, points=500,...){
+
+```{r lissajous, echo=FALSE}
+
+lissajous <- function(freqx=1, freqy=1, shift=90, points=500,...){
   df <- tibble(
   t = seq(0,2*pi, length.out=points),
-  x = sin(t*freqx + shift),
+  x = sin(t*freqx + rad(shift)),
   y = sin(t*freqy)
   ) 
   
   p <-df %>% ggplot(aes(x=x, y=y)) + 
   geom_point(aes(color=t), shape=19, size=5, alpha=0.2) +
   geom_path(size=0.2, alpha=0.5) +
-  theme_void() +
+  theme_void(base_family="Roboto Condensed") +
   scale_color_viridis_c(guide="none", option="D") +
+  labs(subtitle = paste0("frequency x:",freqx," frequency y:",freqy, " shift x:",shift),
+       title="Lissajous Figure") +
   coord_fixed()
   
   print(p)
 }
 
-lissajous(freqx=3, freqy=2, shift=90)
-lissajous(freqx=2, freqy=1, shift=90)
-lissajous(1,2,120)
-lissajous(1,3,75)
-lissajous(1,3,195)
-lissajous(2,5,90,1000)
-lissajous(6,8,90,1000)
-lissajous(4,9,90,1000)
-lissajous(19,11,75,3000)
-lissajous(19,9,75,4000)
-lissajous(11,13,90,5000)
-lissajous(13,23,75,5000)
+
+
+#experiment <-expand.grid(freqx=c(1,2,3), freqy=c(1,2,3,6,17),shift=c(pi/6,pi/3,pi/2))
+
+#experiment %>% pmap(.,lissajous)
+
+params <- tibble(
+  freqx = sample(c(1:10),size=10,replace=T),
+  freqy = sample(c(1:25), size=10, replace=T),
+  shift = sample(c(0:360), size=10, replace=T),
+  points = 3000
+)
+
+
+#params <-params %>% expand.grid() %>% unique()
+
+## Save plots to list, so i can print them into PDF file
+my.list <- params %>% pmap(., lissajous)
+
+## save the images to a PDF file
+cairo_pdf("output/lissajous.pdf", onefile=T)
+my.list
+dev.off()
+
+
+
+lissajous()
+lissajous(freqx=1, freqy=2, shift=pi/2)
+lissajous(freqx=1, freqy=3, shift=pi/2)
+lissajous(1,10,90)
+lissajous(1,8,pi/9)
+lissajous(1,2,pi/4)
+lissajous(2,3,pi/5,1000)
+lissajous(6,8,pi/2,1000)
+lissajous(4,9,pi/3,1000)
+lissajous(19,11,pi/36,3000)
+lissajous(19,9,pi/2,4000)
+lissajous(11,13,pi/90,5000)
+lissajous(13,23,rad(270),5000)
+lissajous(13,23,rad(30),5000)
 
 
 ```
 
 
 ## Modulated Figures
+
+```{r modulatedfigures}
+
+modulated <- function(freqx=1, freqy=2, shiftx=90, shifty=120, modfreqx=2,modfreqy=3, points=1000,...){
+  
+  df <- tibble(
+  t = seq(0,2*pi, length.out=points),
+  x = sin(t*freqx + rad(shiftx)) * cos(t*modfreqx),
+  y = sin(t*freqy + rad(shifty)) * cos(t*modfreqy)
+)
+
+  p <-df %>% 
+    ggplot(aes(x=x, y=y)) + 
+    geom_point(aes(color=t), shape=19, size=2, alpha=0.1) +
+    geom_path(size=0.2, alpha=0.5) +
+    theme_void(base_family="Roboto Condensed") +
+    scale_color_viridis_c(guide="none", option="C") +
+    labs(subtitle = paste0("freq x:",freqx," freq y:",freqy, 
+                         " shift x:",shiftx, "degree  shift y:",shifty,
+                         "degree  mod freq x: ",modfreqx, "mod freq y:", modfreqy," | ",points,"points "),
+         title="Modulated Figure - Info Signal + Carrier Signal") +
+    coord_fixed()
+  
+  print(p)
+
+}
+
+modulated()
+modulated(90,8,90,90,8,28,5000)
+modulated(30,8,90,100,1,28,5000)
+modulated(30,8,90,100,1,28,5000)
+modulated(50,50,90,100,1,28,5000)
+modulated(30,1,90,100,80,28,5000)
+
+
+mod.params <- tibble(
+  freqx = sample(c(0:100),size=10,replace=T),
+  freqy = sample(c(0:100), size=10, replace=T),
+  shiftx = sample(seq(0,360, by=10), size=10, replace=T),
+  shifty = sample(seq(0,360, by=5), size=10, replace=T),
+  modfreqx = sample(c(0:100),size=10,replace=T),
+  modfreqy = sample(c(0:100), size=10, replace=T),
+  points = sample(c(5000,10000,8000), size=10, replace=T)
+)
+
+my.mod.list <- mod.params %>% pmap(., modulated)
+
+## save the images to a PDF file
+cairo_pdf("output/modulated.pdf", onefile=T)
+my.mod.list
+dev.off()
+
+
+```
+
+
+
+## Geometric Shape
+
+```{r shapes}
+
+my_shape <- function(points=100, a=2, b=4,...){
+  shape.dt <- tibble(
+    t = c(1:points),
+    radius = seq(from=points, to=1, length.out=points),
+    angle = a*pi/b,
+    x = cos(angle*t) * radius,
+    y = sin(angle*t) * radius
+  )
+  p <-shape.dt %>% 
+    ggplot(aes(x=x, y=y)) + 
+    geom_path(size=0.1) +
+    coord_fixed() +
+    theme_void()
+  
+  print(p)
+  
+}
+
+
+my_shape(1000, 3, 5)
+my_shape(1000, 5, 2)
+my_shape(100, 4, 3)
+my_shape(1000, 3, 10)
+
+
+
+df <-tibble(
+  t = 1:1000,
+  angle = sample(1:20,1),
+  x = cos(angle * t) * t,
+  y = sin(angle * t) * t
+) 
+df %>% ggplot(aes(x=x, y=y)) + 
+  geom_point(aes(color=t)) + 
+  geom_path(size=0.1, alpha=0.3) +
+  theme_void(base_family="Roboto Condensed") +
+  scale_color_viridis_c(option="A", guide="none") +
+  labs(title=unique(df$angle)) +
+  coord_equal()
+
+
+df3 <- tibble(
+  t = 1:1200,
+  angle = c(rep(3,400), rep(sqrt(pi),400), rep(5,400)),
+  x = cos(angle * t) * t ,
+  y = sin(angle * t) * t
+)
+
+df3 %>% ggplot(aes(x=x, y=y)) + 
+  geom_point(aes(color=t)) + 
+  geom_path(size=0.1, alpha=0.3) +
+  theme_void(base_family="Roboto Condensed") +
+  scale_color_viridis_c(option="A", guide="none") +
+  labs(title=paste(unique(df3$angle), collapse=" | ")) +
+  coord_equal()
+
+
+
+```
+
 
