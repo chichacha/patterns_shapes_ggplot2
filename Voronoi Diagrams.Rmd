@@ -78,8 +78,8 @@ ggplot(test, aes(x=x, y=y)) +
 
 
 test2 <- tibble(
-  i=seq(from = 0, to = 2*pi, length.out=60),
-  x=sin(i*3 + pi/3),
+  i=seq(from = 0, to = 2*pi, length.out=100),
+  x=2*sin(i*4 + pi/3),
   y=sin(i*2 + pi/4)
 )
 
@@ -87,11 +87,11 @@ test2_voronoi <- deldir(test2$x, test2$y)
 
 test2 %>% ggplot(aes(x=x,y=y)) + 
   geom_point() +
-  #geom_segment(data=test2_voronoi$dirsgs, aes(x=x1,y=y1, xend=x2, yend=y2), color="aquamarine4", alpha=0.3) +
+  geom_segment(data=test2_voronoi$dirsgs, aes(x=x1,y=y1, xend=x2, yend=y2), color="chocolate3", alpha=0.3) +
   geom_segment(data=test2_voronoi$delsgs, aes(x=x1,y=y1, xend=x2, yend=y2), color="chocolate2", alpha=0.4) +
   theme_void() +
   geom_path(color="#33333320", linetype=3)  +
-  coord_fixed()
+  coord_fixed() 
   #annotate(geom="rect",xmin=test2_voronoi$rw[1], xmax=test2_voronoi$rw[2],ymin = test2_voronoi$rw[3], ymax=test2_voronoi$rw[4], fill=NA, color="aquamarine4") +
   #coord_polar(theta="x")
 
