@@ -1,0 +1,211 @@
+---
+title: "Voronoi Diagrams"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+
+## Delaunay Triangulation 
+https://en.wikipedia.org/wiki/Delaunay_triangulation
+
+
+## Voronoi Diagram (Dirichlet Tessellation)
+https://en.wikipedia.org/wiki/Voronoi_diagram
+
+```{r}
+
+library(tidyverse)
+library(deldir)
+library(ggrepel)
+
+set.seed(777)
+n <- 15
+test <- tibble(
+  i = 1:n,
+  x = runif(n=n),  ## normal distribution
+  y = runif(n=n)  ## uniform distribution
+) 
+
+# Calculate tessellation and triangulation
+voronoi <- deldir(test$x, test$y)
+voronoi$delsgs
+voronoi$dirsgs
+voronoi$summary
+
+## Delaunay Triangulation  - Data Frame with 6 columns
+voronoi$delsgs %>% ggplot() +
+  geom_segment(aes(x = x1, y = y1 , xend = x2, yend = y2)) +
+  geom_point(data=test, aes(x=x, y=y, color=i)) +
+  scale_color_viridis_c(end=0.7) +
+  theme_minimal() +
+  labs(title="Delaunay Triangulation (delsgs)",x="",y="")
+
+
+voronoi$delsgs %>% ggplot() +
+  geom_segment(aes(x = x1, y = y1 , xend = x2, yend = y2)) +
+  geom_point(data=voronoi$summary, 
+             aes(x=x,y=y,size=n.tri, color=factor(n.tri))) +
+  geom_text(data=test, aes(x=x,y=y,label=i), color="white") +
+  theme_minimal(base_family="Roboto Condensed") +
+  scale_size_area(max_size=10, guide="none")+
+  scale_color_viridis_d(end=0.8, option="C", name="Number of Triangles") +
+  labs(title="Delaunay Triagles", x="", y="", 
+       subtitle="delsgs plotted")
+
+
+## Dirichlet Tessellation  - Data Frame with 10 columns
+voronoi$dirsgs %>% ggplot() +
+  geom_segment(aes(x = x1, y = y1 , xend = x2, yend = y2)) +
+  geom_point(data=voronoi$summary, 
+             aes(x=x,y=y,size=n.tside, color=factor(n.tside))) +
+  geom_text(data=test, aes(x=x,y=y,label=i), color="white") +
+  theme_bw() +
+  scale_size_area(max_size=10, guide="none") +
+  scale_color_viridis_d(option="C", end=0.8, name="Number of Sides") +
+  labs(title="Dirichlet Tessellation (Voronoi Tesselation)", x="",y="",
+       subtitle="dirsgs plotted")
+
+
+## Both Plotted Together
+ggplot(test, aes(x=x, y=y)) +
+  geom_point(size=5) +
+  geom_segment(data=voronoi$dirsgs, aes(x=x1,y=y1, xend=x2, yend=y2), color="aquamarine4") +
+  geom_segment(data=voronoi$delsgs, aes(x=x1,y=y1, xend=x2, yend=y2), color="chocolate2") +
+  labs(title="") +
+  theme_void()
+  
+
+
+test2 <- tibble(
+  i=seq(from = 0, to = 2*pi, length.out=60),
+  x=sin(i*3 + pi/3),
+  y=sin(i*2 + pi/4)
+)
+
+test2_voronoi <- deldir(test2$x, test2$y)
+
+test2 %>% ggplot(aes(x=x,y=y)) + 
+  geom_point() +
+  #geom_segment(data=test2_voronoi$dirsgs, aes(x=x1,y=y1, xend=x2, yend=y2), color="aquamarine4", alpha=0.3) +
+  geom_segment(data=test2_voronoi$delsgs, aes(x=x1,y=y1, xend=x2, yend=y2), color="chocolate2", alpha=0.4) +
+  theme_void() +
+  geom_path(color="#33333320", linetype=3)  +
+  coord_fixed()
+  #annotate(geom="rect",xmin=test2_voronoi$rw[1], xmax=test2_voronoi$rw[2],ymin = test2_voronoi$rw[3], ymax=test2_voronoi$rw[4], fill=NA, color="aquamarine4") +
+  #coord_polar(theta="x")
+
+
+test2_voronoi$rw ## bounding area xmin, xmax, ymin, ymax
+test2_voronoi$n.data
+test2_voronoi$del.area
+test2_voronoi$dir.area
+
+
+plot.new()
+plot(test2_voronoi)
+plot(test2_voronoi, 
+     wlines="triang", ## which line, tess or triang
+     wpoints="none" ## which points, 
+     )
+
+plot(test2_voronoi, 
+     wlines="tess", ## which line, tess or triang
+     wpoints="both", ## which points, 
+     number=T
+     )
+
+
+
+```
+
+
+## What if I wanted to fill with some colour...
+
+```{r}
+
+set.seed(777)
+n <- 15
+test2 <- tibble(
+  i = 1:n,
+  x = runif(n=n),  ## normal distribution
+  y = runif(n=n),  ## uniform distribution
+  cat = sample(x=c("cat","dog","bear","cougar","coyote","deer"), size=n,replace=T)
+) 
+
+test2_voronoi <- deldir(x=test2$x, y=test2$y)
+test2_dir <- test2_voronoi$dirsgs
+test2_del <- test2_voronoi$delsgs
+
+test2_del_long <- test2_del %>%
+  mutate(i=row_number()) %>%
+  select(-ind1, -ind2) %>%
+  gather(key="x_dir", value="x_value", x1,x2) %>%
+  gather(key="y_dir", value="y_value", y1,y2) %>%
+  inner_join(test2)
+
+  
+
+```
+
+
+## Airport in Japan
+https://en.wikipedia.org/wiki/List_of_airports_in_Japan
+
+```{r}
+
+library(rvest)
+library(tidyverse)
+library(janitor)
+airport <- read_html("https://en.wikipedia.org/wiki/List_of_airports_in_Japan") %>% html_table() 
+japan_airport <- airport[[1]] ## I'm only intereseted in first table
+
+japan_airport <- clean_names(japan_airport)
+
+japan_airport <- japan_airport %>%
+  mutate(lat = as.numeric(str_extract(coordinates,"\\d{1,2}.\\d{5}")),
+         lng = as.numeric(str_extract(coordinates,"\\d{3}.\\d{5}")))
+
+japan_airport <- japan_airport %>%
+  select(airport_name, island, iata, icao,classification, prefecture, lat,lng )
+
+japan_airport <- japan_airport %>% filter(!is.na(lat))
+# International Air Transport Association = iata
+
+
+
+airport_deldir <- deldir(japan_airport$lng, japan_airport$lat)
+
+
+ggplot(japan_airport, aes(x=lng, y=lat, color=classification)) +
+  geom_segment(data=airport_deldir$delsgs, 
+               aes(x=x1, xend=x2, y=y1, yend=y2),
+               color="#33333390", linetype=3) +
+  geom_segment(data=airport_deldir$dirsgs, 
+               aes(x=x1, xend=x2, y=y1, yend=y2),
+               color="#00000090", linetype=1 ) +
+  geom_point(aes(color=classification), alpha=0.5) +
+  geom_text_repel(aes(label=iata),alpha=0.8, family="Roboto Condensed") + 
+  theme_void() 
+
+## Get Map of Japan
+japanMap <-map_data(database="world", regions="japan")
+
+
+ggplot(japan_airport, aes(x=lng,y=lat)) +
+  geom_polygon(data=japanMap, aes(x=long, y=lat, group=group), fill="#00000090") +
+  geom_segment(data=airport_deldir$dirsgs,
+               aes(x=x1, xend=x2, y=y1, yend=y2), linetype=3) +
+  geom_segment(data=airport_deldir$delsgs,
+               aes(x=x1, xend=x2, y=y1, yend=y2), color="#33333390") +
+  geom_point(aes(color=fct_infreq(classification)), size=5, alpha=0.5) +
+  geom_text_repel(aes(label=iata, color=classification),family="Roboto Condensed", 
+                  nudge_x=100, segment.alpha=0.3,
+                  data = . %>% filter(str_detect(classification,"(First|Second)"))) +
+  scale_color_viridis_d() +
+  coord_map() +
+  theme_minimal(base_family="Roboto Condensed")
+
+
+```
+
